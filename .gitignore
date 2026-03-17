@@ -5,3 +5,5 @@ CMakeCache.txt
 Makefile
 runner
 .DS_Store
+.vscode
+data/output
