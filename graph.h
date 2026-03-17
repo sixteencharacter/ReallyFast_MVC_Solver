@@ -7,6 +7,9 @@
 
 using namespace std;
 
+// TODO: fix this to be just subset finder with more optimization from this paper
+// https://arxiv.org/pdf/1904.00051
+
 namespace MVC
 {
 
@@ -32,7 +35,7 @@ namespace MVC
             vector<bool> coverage(this->n_vertices, false), visited(this->n_vertices, false);
 
             pickZeroDegreeNode(coverage,picks);
-            
+
             for(int i = 0; i < this->n_vertices ; i++) {
                 recursiveMVC(picks, coverage, visited, i , -1);
             }
