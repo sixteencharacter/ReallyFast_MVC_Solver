@@ -1,0 +1,7 @@
+CMakeFiles/
+*.zip
+cmake_install.cmake
+CMakeCache.txt
+Makefile
+runner
+.DS_Store
