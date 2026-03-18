@@ -13,4 +13,5 @@ else()
 endif()
 
 add_executable(runner main.cpp)
+target_compile_options(runner PRIVATE -O3)
 target_link_libraries(runner PUBLIC OpenMP::OpenMP_CXX)

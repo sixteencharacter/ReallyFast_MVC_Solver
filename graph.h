@@ -1,13 +1,12 @@
 #include <iostream>
-// #include <omp.h>
+#include <omp.h>
 #include <vector>
 #include <map>
+#include <unordered_map> // Added missing header
 #include <algorithm>
 #include <cstdlib>
 
 using namespace std;
-
-// TODO: fix this to be just subset finder with more optimization
 
 namespace MVC
 {
@@ -32,23 +31,35 @@ namespace MVC
         void calcMVC()
         {
             vector<int> picks;
-            recursiveMVC(picks);
+            
+            // Start the parallel region
+            #pragma omp parallel
+            {
+                // Ensure only one thread starts the initial recursive call
+                #pragma omp single
+                {
+                    recursiveMVC(picks);
+                }
+            }
         }
 
         void printResult() {
             sort(this->bestMVC.begin(),this->bestMVC.end());
             int ref = 0;
             for(int i = 0 ; i < this->n_vertices ; i++) {
-                if(i == this->bestMVC[ref]) {
-                    cout<<1;
+                if(ref < this->bestMVC.size() && i == this->bestMVC[ref]) {
+                    cout << 1;
                     ref++;
                 } else {
-                    cout<<0;
+                    cout << 0;
                 }
             }
         }
 
         int calcCoverage(vector<int> &picks) {
+        //     cout<<"Coverage ";
+        //    for(auto p : picks) cout<<this->reverseHeuristicMap[p]<<" ";
+        //    cout<<"\n";
            unordered_map<int,int> mp;
            for(int p : picks) {
                 mp[this->reverseHeuristicMap[p]] = 1;
@@ -56,96 +67,74 @@ namespace MVC
                    mp[n] = 1;
                 }
             }
-
-            // // Debug
-            // cout<<"\nPicks: ";
-            // for(auto p : picks) cout<<p<<" ";
-            // cout<<"\n";
-
-            // cout<<"MP Size : "<<mp.size()<<"\n";
-
-            // // Debug
-
             return mp.size();
         }
 
         void populateOrdering() {
-            vector<pair<int,int> > nodedegs; // <deg,node>
+            vector<pair<int,int> > nodedegs; 
             int i = 0;
             for(auto a : this->adj) nodedegs.push_back(make_pair((int)a.size(),i++));
+            
             sort(nodedegs.begin(),nodedegs.end(),[](const pair<int,int> &a , const pair<int,int> &b) {
-                if(a.first == b.first) return ((rand() / RAND_MAX) > 0.5)? true : false;
+                if(a.first == b.first) return ((double)rand() / RAND_MAX) > 0.5;
                 return b.first < a.first;
             });
+            
             i = 0;
             for(pair<int,int> n : nodedegs) {this->reverseHeuristicMap[i] = n.second; i++;}
-
-            // DEBUG : START
-            // for(auto x : nodedegs) cout<<x.second<<"("<<x.first<<")"<<" ";
-            // for(auto x = this->reverseHeuristicMap.begin() ; x != this->reverseHeuristicMap.end() ; x++ ) {
-            //     cout<<x->first<<"->"<<x->second<<"\n";
-            // }
-            // cout<<"\n";
-            // DEBUG : END
         }
 
-        void recursiveMVC(vector<int> picks,int depth = 0) {
+        void recursiveMVC(vector<int> picks, int depth = 0) {
             
-            if(picks.size() > bestCost) {
+            int currentBest;
 
-                // BEGIN : DEBUG
-                // cout<<"The result was bounded, Terminating this flow\n";
-                // END : DEBUG
+            #pragma omp atomic read
+            currentBest = this->bestCost;
 
+            if(picks.size() > currentBest) {
                 return;
             }
 
             if(depth == this->n_vertices - 1) {
 
                 if (calcCoverage(picks) == this->n_vertices) {
-    
-                    // BEGIN : DEBUG
-                    // cout<<"Got full coverage\n";
-                    // END : DEBUG
-
                     vector<int> ansIdx;
                     for(auto p : picks) ansIdx.push_back(this->reverseHeuristicMap[p]);
-
-                    // // DEBUG
-                    // cout<<"ansIdx: ";
-                    // for(auto x : ansIdx) cout<<x<<" ";
-                    // cout<<"\n";
-                    // // DEBUG
                     
-                    if (picks.size() <= this->bestCost) {
-                        this->bestMVC = vector<int>(ansIdx);
-                        this->bestCost = ansIdx.size();
+
+                    #pragma omp critical
+                    {
+                        if (ansIdx.size() <= this->bestCost) {
+                            this->bestMVC = vector<int>(ansIdx);
+                            this->bestCost = ansIdx.size();
+                        }
                     }
                 }
-
                 return;
-
             }
 
-            if((rand() / RAND_MAX) > 0.5) {                
-                // case 2 : selecting this vertex
-                picks.push_back(depth);
-                recursiveMVC(picks,depth+1);
-                picks.pop_back();
-    
-                // case 1 : not selecting this vertex
-                recursiveMVC(picks,depth+1);
+            vector<int> picks_with = picks;
+            picks_with.push_back(depth);
+
+            if (depth < 10) {
+
+                #pragma omp task shared(reverseHeuristicMap,bestMVC,bestCost,n_vertices,adj) firstprivate(picks_with, depth)
+                recursiveMVC(picks_with, depth + 1);
+                
+                #pragma omp task shared(reverseHeuristicMap,bestMVC,bestCost,n_vertices,adj) firstprivate(picks_with, depth)
+                recursiveMVC(picks, depth + 1);
+
+                #pragma omp taskwait
+
             } else {
-                // case 1 : not selecting this vertex
-                recursiveMVC(picks,depth+1);
-
-                // case 2 : selecting this vertex
-                picks.push_back(depth);
-                recursiveMVC(picks,depth+1);
-                picks.pop_back();
+                if(((double)rand() / RAND_MAX) > 0.5) {                
+                    recursiveMVC(picks_with, depth+1);
+                    recursiveMVC(picks, depth+1);
+                } else {
+                    recursiveMVC(picks, depth+1);
+                    recursiveMVC(picks_with, depth+1);
+                }
             }
-            
         }
-
     };
 }
