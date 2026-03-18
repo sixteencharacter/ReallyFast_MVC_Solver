@@ -1,0 +1,2 @@
+-I/opt/homebrew/opt/libomp/include
+-L/opt/homebrew/opt/libomp/lib
