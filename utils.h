@@ -3,6 +3,7 @@
 #include <tuple>
 #include <algorithm>
 #include <iterator>
+#include <omp.h>
 #include "graph.h"
 #include "type.h"
 
@@ -78,5 +79,11 @@ namespace MDS {
         }
         sort(ranking.begin(),ranking.end());
         return ranking;
+    }
+
+    vector<int> set2vec(set<int> s) {
+        vector<int> ret;
+        for(int se : s) ret.push_back(se);
+        return ret;
     }
 }
