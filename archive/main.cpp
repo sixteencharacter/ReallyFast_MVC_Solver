@@ -1,13 +1,12 @@
 #include <iostream>
 #include <vector>
+// #include <omp.h>
 #include "graph.h"
-#include "solver.h"
-#include "type.h"
 #include <cstdlib>
 #include <ctime>
 
 using namespace std;
-using namespace MDS;
+using namespace MVC;
 
 // int max_threads = omp_get_max_threads();
 
@@ -22,12 +21,8 @@ int main(int args , char** kwargs) {
         cin>>f>>t;
         g.addEdge(f,t);
     }
-    problemInstance I;
-    set<int> DStar = g.v_set;
-    set<int> result = bibSearch(g,I,DStar);
-    for(auto x : result) {
-        cout<<x<<" ";
-    }
-    cout<<"\n";
+    g.populateOrdering();
+    g.calcMVC();
+    g.printResult();
     return 0;
 }
