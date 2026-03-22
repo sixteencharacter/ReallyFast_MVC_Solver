@@ -11,6 +11,12 @@ using namespace std;
 
 namespace MDS {
 
+    vector<int> set2vec(set<int> s) {
+        vector<int> ret;
+        for(int se : s) ret.push_back(se);
+        return ret;
+    }
+
     set<int> difference(const set<int> &a ,const set<int>&b , set<int> *container = NULL) {
         set<int> ret;
         if(container == NULL) set_difference(a.begin(),a.end(),b.begin(),b.end(),inserter(ret,ret.begin()));
@@ -59,13 +65,19 @@ namespace MDS {
 
     int sampleV(const Graph &g , problemInstance &I) {
         set<int> undominated = difference(g.v_set,sunion(N_Set(g,I.S),I.I));
-        vector<tuple<int,int,int> > ranking; // |D_v| , sum_(d_v){|C_u|} , index
-        for(int v : undominated) {
-            set<int> d_v = D(g,I,v);
+        vector<tuple<int,int,int> > ranking(undominated.size()); // |D_v| , sum_(d_v){|C_u|} , index
+        vector<int> undominated_vec = set2vec(undominated);
+        #pragma omp parallel for schedule(dynamic)
+        for(int i = 0; i < undominated_vec.size() ; i++) {
+            set<int> d_v = D(g,I,undominated_vec[i]);
             int args1 = d_v.size();
             int args2 = 0;
-            for(int u : d_v) args2 -= C(g,I,u).size();
-            ranking.push_back(make_tuple(args1,args2,v));
+            vector<int> d_v_vec = set2vec(d_v);
+            for(int u : d_v_vec) {
+                int reduction = C(g,I,u).size();
+                args2 -= reduction;
+            }
+            ranking[i] = (make_tuple(args1,args2,undominated_vec[i]));
         }
         sort(ranking.begin(),ranking.end());
         return get<2>(ranking[0]);
@@ -73,17 +85,13 @@ namespace MDS {
 
     vector<pair<int,int> > sample_u_dv(const Graph &g , problemInstance &I, int v) {
         set<int> its = D(g,I,v);
-        vector<pair<int,int> > ranking; // -|Cu| , |idx|
-        for(auto u : its) {
-            ranking.push_back(make_pair(-1*C(g,I,u).size(),u));
+        vector<pair<int,int> > ranking(its.size()); // -|Cu| , |idx|
+        vector<int> iterations_vec = set2vec(its);
+        # pragma omp parallel for schedule(dynamic)
+        for(int i = 0 ; i < iterations_vec.size() ; i++) {
+            ranking[i] = make_pair(-1*C(g,I,iterations_vec[i]).size(),iterations_vec[i]);
         }
         sort(ranking.begin(),ranking.end());
         return ranking;
-    }
-
-    vector<int> set2vec(set<int> s) {
-        vector<int> ret;
-        for(int se : s) ret.push_back(se);
-        return ret;
     }
 }
