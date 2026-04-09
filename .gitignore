@@ -8,3 +8,4 @@ runner
 .vscode
 data/output
 tester
+build/
