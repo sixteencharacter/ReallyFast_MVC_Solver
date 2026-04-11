@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-// #include <omp.h>
+#include <omp.h>
 #include "graph.h"
 #include <cstdlib>
 #include <ctime>

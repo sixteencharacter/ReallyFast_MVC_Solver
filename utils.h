@@ -3,7 +3,7 @@
 #include <tuple>
 #include <algorithm>
 #include <iterator>
-#include <omp.h>
+// #include <omp.h>
 #include "graph.h"
 #include "type.h"
 

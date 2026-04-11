@@ -2,7 +2,7 @@
 #include "type.h"
 #include "graph.h"
 #include "utils.h"
-#include <omp.h>
+// #include <omp.h>
 
 using namespace std;
 

@@ -6,15 +6,15 @@
 #include "utils.h"
 #include <cstdlib>
 #include <ctime>
-#include <omp.h>
+// #include <omp.h>
 
 using namespace std;
 using namespace MDS;
 
-int mx_thread = omp_get_max_threads();
+// int mx_thread = omp_get_max_threads();
 
 int main(int args , char** kwargs) {
-    omp_set_num_threads(mx_thread);
+    // omp_set_num_threads(mx_thread);
     srand(time(0));
     int v, e;
     // printf("Running with %d threads",max_threads);
