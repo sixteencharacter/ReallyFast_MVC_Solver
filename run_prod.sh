@@ -1,0 +1,1 @@
+time docker run --rm -it -v "$(pwd)/data/input:/input" -v "$(pwd)/data/output:/output" 6632250621/2110452-final-proj:latest "$1" "$2"

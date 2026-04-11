@@ -7,5 +7,5 @@ path_out = [p.replace("/input/","/output/") for p in path_in]
 
 for (pin,pout) in zip(path_in,path_out) :
     print("Running {} -> {}".format(pin,pout))
-    os.system("./run_local_test.sh {} {}".format(pin,pout))
+    os.system("./run_prod.sh {} {}".format(pin,pout))
     print("Done!")
